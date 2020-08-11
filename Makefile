@@ -94,6 +94,10 @@ deps:
 telegraf:
 	go build -ldflags "$(LDFLAGS)" ./cmd/telegraf
 
+.PHONY: go-install
+go-install:
+	go install ./cmd/telegraf
+
 .PHONY: test
 test:
 	go test -short $(race_detector) ./...

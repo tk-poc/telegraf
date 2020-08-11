@@ -20,6 +20,7 @@ import (
 
 type Elasticsearch struct {
 	URLs                []string `toml:"urls"`
+	IDKey               string   `toml:"id_key"`
 	IndexName           string
 	DefaultTagValue     string
 	TagKeys             []string
@@ -263,7 +264,19 @@ func (a *Elasticsearch) Write(metrics []telegraf.Metric) error {
 		m["tag"] = metric.Tags()
 		m[name] = metric.Fields()
 
-		br := elastic.NewBulkIndexRequest().Index(indexName).Doc(m)
+		var mID interface{} = ""
+		var exists bool
+		//check if ID key is present.
+		if a.IDKey != "" {
+			if mID, exists = metric.GetField(a.IDKey); exists {
+				//remove the ID key field from the payload
+				metric.RemoveField(a.IDKey)
+			} else {
+				mID = ""
+			}
+		}
+
+		br := elastic.NewBulkIndexRequest().Id(mID.(string)).Index(indexName).Doc(m)
 
 		if a.MajorReleaseNumber <= 6 {
 			br.Type("metrics")
